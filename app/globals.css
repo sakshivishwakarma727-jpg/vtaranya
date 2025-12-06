@@ -1,0 +1,113 @@
+/* GLOBAL SOFT LIGHT THEME */
+body {
+  margin: 0;
+  padding: 0;
+  background: #f2f6f4;
+  font-family: "Inter", sans-serif;
+  color: #1b3a28;
+}
+
+/* Fade animation */
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.8s forwards ease-in-out;
+}
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+
+/* Centered card used in login, register, report */
+.center-card {
+  width: 100%;
+  max-width: 650px;
+  margin: 80px auto;
+  padding: 40px;
+  background: #ffffffa8;
+  border-radius: 18px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.2);
+  border: 1px solid #cde3cf;
+}
+
+/* Form input styles */
+.input-field,
+.textarea-field,
+.select-field {
+  width: 100%;
+  padding: 14px 16px;
+  margin-top: 6px;
+  border-radius: 12px;
+  border: 1px solid #bcd8bd;
+  font-size: 16px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+.submit-btn {
+  margin-top: 14px;
+  background: linear-gradient(135deg, #2e7d32, #496a4b);
+  border: none;
+  color: white;
+  padding: 15px;
+  border-radius: 12px;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.submit-btn:hover {
+  opacity: 0.9;
+}
+
+/* Title + logo block */
+.page-header {
+  text-align: center;
+  margin-top: 35px;
+}
+
+.page-logo {
+  width: 85px;
+  height: 85px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 15px;
+}
+
+.page-title {
+  font-size: 30px;
+  font-weight: 700;
+  color: #2c6231;
+}
+
+.page-desc {
+  margin-top: 10px;
+  font-size: 16px;
+  color: #333;
+}
+
+/* Landing page buttons */
+.main-btn {
+  padding: 15px 24px;
+  background: #2b5f2e;
+  color: white;
+  font-size: 18px;
+  text-decoration: none;
+  border-radius: 14px;
+  display: inline-block;
+  margin-top: 20px;
+}
+
+.main-btn:hover {
+  opacity: 0.9;
+}
+
+/* FOOTER always at bottom */
+.footer {
+  text-align: center;
+  padding: 25px 0;
+  color: #1b3a28;
+  background: #e9f3eb;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  font-size: 14px;
+  border-top: 1px solid #cfe3d1;
+}
