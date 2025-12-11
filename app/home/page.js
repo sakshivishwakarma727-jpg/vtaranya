@@ -1,304 +1,275 @@
 "use client";
-
+import Navbar from "@/components/Navbar";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+
 
 export default function HomePage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
   const redirectTo = searchParams.get("redirect");
 
-  // Redirect to report after login-from-landing
+  const [activeSection, setActiveSection] = useState("home");
+  const [menuOpen, setMenuOpen] = useState(false); // untouched
+
+  // ----------------------------
+  // Redirect Logic (unchanged)
+  // ----------------------------
   useEffect(() => {
     if (redirectTo === "report") {
-      setTimeout(() => {
-        router.push("/report");
-      }, 1200);
+      setTimeout(() => router.push("/report"), 1200);
     }
   }, []);
 
-  // Check token
+  // ----------------------------
+  // Scroll Highlight Logic
+  // ----------------------------
   useEffect(() => {
-    const token = document.cookie.includes("token=");
-    if (!token) router.push("/home");
+    const sections = document.querySelectorAll("section");
+
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { threshold: 0.4 }
+    );
+
+    sections.forEach(sec => observer.observe(sec));
   }, []);
 
-  const goToReport = () => {
-    router.push("/report");
+  const scrollTo = id => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth" });
   };
+
+  const goToSettings = () => router.push("/settings");
+  const goToAbout = () => router.push("/about");
+  const goToReport = () => router.push("/report");
 
   return (
     <div style={styles.wrapper}>
+      <Navbar activeSection={activeSection} scrollTo={scrollTo} />
 
-      {/* SIDEBAR */}
-      <aside style={styles.sidebar}>
-        <img 
-          src="/logo.png" 
-          alt="VTARANYA Logo"
-          style={styles.logoImg}
-        />
-
-        <h2 style={styles.logoText}>VTARANYA</h2>
-
-        <nav style={styles.nav}>
-          <a style={styles.navItem} className="nav-animate" href="#features">Features</a>
-          <a style={styles.navItem} className="nav-animate" href="#about">About</a>
-          <a style={styles.navItem} className="nav-animate" href="#settings">Settings</a>
-          <a style={styles.navItem} className="nav-animate" href="#profile">Profile</a>
-        </nav>
-      </aside>
-
-      {/* MAIN CONTENT */}
       <main style={styles.main}>
-        
-        {/* HEADER */}
-        <header style={styles.header}>
-          <h1 style={styles.headerTitle}>Nature Reporting System</h1>
 
-          {/* TOP RIGHT REPORT BUTTON */}
-          <button style={styles.topRightReportBtn} onClick={goToReport}>
-            Report
-          </button>
-        </header>
-
-        {/* HERO / INTRO */}
-        <section style={styles.heroSection} >
-          <img 
-            src="/nature.jpg" 
-            alt="Nature Banner"
-            style={styles.heroImg}
-          />
-          <div>
-          
-            <h2 style={styles.heroTitle}>Protecting Nature Together</h2>
-            <p style={styles.heroSub}>
-              VTARANYA empowers citizens to report environmental issues directly  
-              to the right authorities using AI-powered categorization.
+        {/* 🌿 HERO SECTION */}
+        <section id="home" style={styles.heroSection}>
+          <div style={styles.heroLeft}>
+            <h1 style={styles.heroTitle}>VTARANYA — Nature Reporting System</h1>
+            <p style={styles.heroSubtitle}>
+              AI-powered environmental grievance reporting system for MPCB, BMC, 
+              NMC, KMC and District Authorities.
             </p>
+
+            <button style={styles.reportButton} onClick={goToReport}>
+              Report an Issue →
+            </button>
           </div>
 
-
+          <img src="/nature.jpg" style={styles.heroImg} />
         </section>
 
-        {/* FEATURES */}
+        {/* ✨ FEATURES */}
         <section id="features" style={styles.section}>
-          <h2 style={styles.sectionTitle}>Platform Features</h2>
+          <h2 style={styles.sectionTitle}>Platform Highlights</h2>
+          <p style={styles.sectionSubtitle}>Smart tools that make reporting effortless</p>
 
-          <div style={styles.cardContainer}>
-            <div style={styles.card}>
-              <h3>📍 Location-Based Reports</h3>
-              <p>Submit area-based complaints using GPS auto-detection.</p>
-            </div>
-
-            <div style={styles.card}>
-              <h3>🧠 AI Auto Categorization</h3>
-              <p>AI reads your report, removes sensitive data & assigns authorities.</p>
-            </div>
-
-            <div style={styles.card}>
-              <h3>📊 Status Tracking</h3>
-              <p>Track progress and updates of submitted issues.</p>
-            </div>
-
-            <div style={styles.card}>
-              <h3>🌎 Multilingual Support</h3>
-              <p>Available in Hindi, Marathi, English, and regional languages.</p>
-            </div>
+          <div style={styles.cardRow}>
+            {features.map((f, i) => (
+              <div key={i} style={styles.card} className="fade-card">
+                <div style={styles.cardIcon}>{f.icon}</div>
+                <h3 style={styles.cardTitle}>{f.title}</h3>
+                <p style={styles.cardText}>{f.desc}</p>
+              </div>
+            ))}
           </div>
         </section>
 
-        {/* ABOUT SECTION */}
+        {/* 📘 ABOUT */}
         <section id="about" style={styles.section}>
           <h2 style={styles.sectionTitle}>About VTARANYA</h2>
           <p style={styles.aboutText}>
-            VTARANYA is an environmental grievance reporting system designed to simplify 
-            eco-issue reporting for citizens. It uses AI to identify issue severity, 
-            categorize the type (pollution, deforestation, waste dumping), and forward it 
-            directly to the responsible authority such as MPCB, BMC, NMC, KMC & district officers.
+            VTARANYA modernizes the environmental grievance reporting system
+            using **AI categorization**, automatic routing to the right authority,  
+            privacy-safe data handling, and real-time tracking.
           </p>
         </section>
 
-        {/* SETTINGS */}
-        <section id="settings" style={styles.section}>
-          <h2 style={styles.sectionTitle}>Settings</h2>
-          <p>Manage profile, language, theme and notifications.</p>
-        </section>
-
-        {/* PROFILE */}
+        {/* 👤 PROFILE */}
         <section id="profile" style={styles.section}>
-          <h2 style={styles.sectionTitle}>Profile</h2>
-          <p>View your submitted complaints and personal account details.</p>
+          <h2 style={styles.sectionTitle}>Your Profile</h2>
+          <p style={styles.aboutText}>
+            Review your submitted complaints, track progress and update account settings.
+          </p>
         </section>
 
-        {/* FOOTER */}
         <footer style={styles.footer}>
-          <p>© 2025 VTARANYA | Nature Reporting System</p>
+          © 2025 VTARANYA — Environmental Issue Reporting System
         </footer>
       </main>
-
-      {/* CSS ANIMATION */}
-      <style>{`
-        .nav-animate {
-          position: relative;
-        }
-        .nav-animate:after {
-          content: "";
-          position: absolute;
-          bottom: -2px;
-          left: 0;
-          width: 0%;
-          height: 3px;
-          background: white;
-          transition: 0.3s;
-        }
-        .nav-animate:hover:after {
-          width: 100%;
-        }
-      `}</style>
-
     </div>
   );
 }
+
+// =========================================
+// ⭐ FEATURES DATA (Not Logic — Just Display)
+// =========================================
+const features = [
+  {
+    icon: "📍",
+    title: "Accurate Location Capture",
+    desc: "Auto-detect GPS location for precise report mapping.",
+  },
+  {
+    icon: "🧠",
+    title: "AI Smart Categorization",
+    desc: "AI removes personal data and assigns reports to the right authority.",
+  },
+  {
+    icon: "📊",
+    title: "Track Progress",
+    desc: "Monitor your complaint status in real-time.",
+  },
+  {
+    icon: "🌎",
+    title: "Multilingual",
+    desc: "Supports English, Hindi and Marathi.",
+  },
+];
+
+// =========================================
+// ⭐ ENHANCED PROFESSIONAL STYLES
+// =========================================
+
 const styles = {
   wrapper: {
-    display: "flex",
+    background: "#ecf4ef",
     minHeight: "100vh",
     fontFamily: "Inter, sans-serif",
-    backgroundColor: "#e9f5ee",
   },
 
-  sidebar: {
-    width: "260px",
-    backgroundColor: "#0f5132",
-    color: "white",
-    padding: "40px 20px",
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-  },
+  main: { padding: "40px 30px" },
 
-  logoImg: {
-    width: "110px",
-    height: "110px",
-    objectFit: "contain",
-    marginBottom: "10px",
-  },
-
-  logoText: {
-    fontSize: "24px",
-    fontWeight: "700",
-    marginBottom: "25px",
-    letterSpacing: "1px",
-  },
-
-  nav: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "18px",
-    width: "100%",
-  },
-
-  navItem: {
-    color: "white",
-    fontSize: "18px",
-    textDecoration: "none",
-    padding: "6px 4px",
-    cursor: "pointer",
-    transition: "0.2s",
-  },
-
-  main: {
-    flexGrow: 1,
-    padding: "30px 50px",
-    overflowY: "auto",
-  },
-
-  header: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "30px",
-  },
-
-  headerTitle: {
-    fontSize: "36px",
-    fontWeight: "900",
-    color: "#0f5132",
-  },
-
-  topRightReportBtn: {
-    backgroundColor: "#198754",
-    color: "white",
-    padding: "10px 18px",
-    borderRadius: "8px",
-    fontSize: "18px",
-    border: "none",
-    cursor: "pointer",
-  },
-
+  // ----------------------------------
+  // HERO
+  // ----------------------------------
   heroSection: {
-    marginBottom: "50px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-  },
-
-  heroTitle: {
-    fontSize: "30px",
-    fontWeight: "700",
-    color: "#0f5132",
-  },
-
-  heroSub: {
-    maxWidth: "70%",
-    fontSize: "18px",
-    marginTop: "10px",
-  },
-
-  heroImg: {
-    width: "260px",
-    borderRadius: "12px",
-  },
-
-  section: {
+    background: "rgba(255,255,255,0.55)",
+    backdropFilter: "blur(14px)",
+    padding: "40px",
+    borderRadius: "18px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
     marginBottom: "60px",
   },
 
-  sectionTitle: {
-    fontSize: "26px",
-    fontWeight: "700",
-    marginBottom: "20px",
+  heroLeft: { maxWidth: "55%" },
+
+  heroTitle: {
+    fontSize: "40px",
+    fontWeight: 900,
+    color: "#0f5132",
   },
 
-  cardContainer: {
+  heroSubtitle: {
+    fontSize: "20px",
+    marginTop: "10px",
+    color: "#145a41",
+    lineHeight: 1.6,
+  },
+
+  heroImg: {
+    width: "320px",
+    borderRadius: "16px",
+    boxShadow: "0 4px 18px rgba(0,0,0,0.2)",
+  },
+
+  reportButton: {
+    marginTop: "25px",
+    background: "linear-gradient(135deg, #0f8f53, #0c6d40)",
+    color: "white",
+    padding: "12px 22px",
+    borderRadius: "10px",
+    border: "none",
+    cursor: "pointer",
+    fontSize: "18px",
+    fontWeight: "700",
+    boxShadow: "0 6px 14px rgba(0,0,0,0.2)",
+    transition: "0.2s",
+  },
+
+  // ----------------------------------
+  // FEATURES
+  // ----------------------------------
+
+  section: { marginBottom: "80px" },
+
+  sectionTitle: {
+    fontSize: "32px",
+    fontWeight: "800",
+    color: "#0f5132",
+    textAlign: "center",
+  },
+
+  sectionSubtitle: {
+    textAlign: "center",
+    marginTop: "8px",
+    color: "#18724a",
+    fontSize: "18px",
+  },
+
+  cardRow: {
     display: "flex",
-    gap: "20px",
     flexWrap: "wrap",
+    gap: "25px",
+    marginTop: "40px",
+    justifyContent: "center",
   },
 
   card: {
-    padding: "20px",
     width: "260px",
-    backgroundColor: "white",
-    borderRadius: "12px",
-    boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+    background: "white",
+    padding: "25px",
+    borderRadius: "16px",
+    boxShadow: "0 10px 24px rgba(0,0,0,0.15)",
+    textAlign: "center",
+    transition: "transform 0.3s, box-shadow 0.3s",
   },
 
+  cardIcon: { fontSize: "34px", marginBottom: "12px" },
+
+  cardTitle: {
+    fontSize: "20px",
+    fontWeight: 700,
+    color: "#0f5132",
+    marginBottom: "10px",
+  },
+
+  cardText: { fontSize: "16px", color: "#145a41" },
+
+  // ----------------------------------
+  // ABOUT
+  // ----------------------------------
+
   aboutText: {
-    maxWidth: "80%",
+    marginTop: "20px",
     fontSize: "18px",
-    lineHeight: "1.6",
+    lineHeight: 1.7,
+    color: "#124f36",
+    maxWidth: "850px",
   },
 
   footer: {
     textAlign: "center",
-    padding: "20px 0",
-    borderTop: "1px solid #ccc",
-    fontSize: "14px",
-    marginTop: "50px",
+    padding: "20px",
+    marginTop: "60px",
+    fontWeight: 600,
   },
 };

@@ -7,40 +7,47 @@ import User from "@/models/User";
 export async function POST(req) {
   try {
     await connectDB();
+
     const { name, email, password } = await req.json();
 
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return NextResponse.json({ error: "Email already exists" }, { status: 400 });
-    }
+    if (!name || !email || !password)
+      return NextResponse.json({ error: "All fields are required" }, { status: 400 });
 
-    const hashed = await bcrypt.hash(password, 10);
+    if (name.trim().length < 3)
+      return NextResponse.json({ error: "Name too short" }, { status: 400 });
+
+    const emailExists = await User.findOne({ email: email.toLowerCase() });
+    if (emailExists)
+      return NextResponse.json({ error: "Email already registered" }, { status: 409 });
+
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
       name,
-      email,
-      password: hashed,
+      email: email.toLowerCase(),
+      password: hashedPassword,
     });
 
+    // Auto-login: generate token
     const token = jwt.sign(
-      { id: user._id },
+      { userId: user._id, email: user.email },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    const res = NextResponse.json({ message: "User created" });
-
-    res.cookies.set("token", token, {
+    const response = NextResponse.json({ message: "User registered successfully" });
+    response.cookies.set("token", token, {
       httpOnly: true,
-      secure: true,
-      sameSite: "strict",
-      path: "/",             // 🔥 FIXED — MUST BE "/"
-      maxAge: 7 * 24 * 60 * 60,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
     });
 
-    return res;
+    return response;
 
   } catch (err) {
+    console.error("REGISTER ERROR:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

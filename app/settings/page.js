@@ -1,159 +1,259 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
-export default function SettingsPage() {
+export default function SettingsPage({ user }) {
   const router = useRouter();
 
-  // Logout function — clears cookie & redirects
-  const handleLogout = async () => {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+  const [form, setForm] = useState({
+    name: user?.name || "",
+    email: user?.email || "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [notifications, setNotifications] = useState(true);
+  const [language, setLanguage] = useState("en");
+  const [theme, setTheme] = useState("light");
+  const [message, setMessage] = useState("");
+
+  // -------------------------------
+  // Form Validation
+  // -------------------------------
+  const validateForm = () => {
+    const { name, email, password, confirmPassword } = form;
+    if (!name || name.trim().length < 3) return "Name must be at least 3 characters.";
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "Enter a valid email.";
+
+    if (password) {
+      if (password.length < 6) return "Password must be at least 6 characters.";
+      if (password !== confirmPassword) return "Passwords do not match.";
+    }
+
+    return null;
+  };
+
+  // -------------------------------
+  // Handle Save Changes
+  // -------------------------------
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setMessage("");
+
+    const error = validateForm();
+    if (error) return setMessage(error);
+
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, notifications, language, theme }),
+      });
+      const data = await res.json();
+      if (!res.ok) return setMessage(data.error || "Update failed");
+
+      setMessage("Settings updated successfully!");
+    } catch (err) {
+      console.error(err);
+      setMessage("Server error. Try again.");
+    }
   };
 
   return (
     <div style={styles.wrapper}>
+      <h2 style={styles.heading}>Settings</h2>
 
-      {/* SIDEBAR */}
-      <aside style={styles.sidebar}>
-        <Image 
-          src="/vtaranya-logo.png"
-          width={120}
-          height={120}
-          alt="VTARANYA Logo"
-          style={{ borderRadius: "10px", marginBottom: "30px" }}
-        />
+      {/* About Us */}
+      <section style={styles.section}>
+        <h3 style={styles.sectionHeading}>About Us</h3>
+        <p style={styles.sectionText}>
+          VTARANYA is dedicated to protecting the environment by allowing users to report environmental issues efficiently and securely.
+        </p>
+      </section>
 
-        <nav style={styles.nav}>
-          <a style={styles.navItem} href="/home">Home</a>
-          <a style={styles.navItem} href="/about">About</a>
-          <a style={styles.navItem} href="/settings">Settings</a>
-        </nav>
-      </aside>
-
-      {/* MAIN */}
-      <main style={styles.main}>
-        <h1 style={styles.pageTitle}>Settings</h1>
-
-        {/* PROFILE SETTINGS */}
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>👤 Profile</h2>
-          <div style={styles.card}>
-            <p>Email: (Auto-filled from database later)</p>
-            <p>User ID: (Auto-filled)</p>
+      {/* Profile Settings */}
+      <section style={styles.section}>
+        <h3 style={styles.sectionHeading}>Profile Settings</h3>
+        <form style={styles.form} onSubmit={handleSave}>
+          <input
+            type="text"
+            placeholder="Full Name"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+            style={styles.input}
+            required
+          />
+          <input
+            type="email"
+            placeholder="Email"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            style={styles.input}
+            required
+          />
+          <div style={styles.passwordWrapper}>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="New Password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              style={styles.input}
+            />
+            <span style={styles.togglePassword} onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? "Hide" : "Show"}
+            </span>
           </div>
-        </section>
+          <input
+            type="password"
+            placeholder="Confirm Password"
+            value={form.confirmPassword}
+            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
+            style={styles.input}
+          />
 
-        {/* LANGUAGE SETTINGS */}
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>🌐 Language</h2>
-          <div style={styles.card}>
-            <select style={styles.selectBox}>
-              <option>English</option>
-              <option>हिंदी</option>
-              <option>मराठी</option>
-              <option>বাংলা</option>
-              <option>தமிழ்</option>
-            </select>
-          </div>
-        </section>
+          <button type="submit" style={styles.button}>Save Changes</button>
+        </form>
+      </section>
 
-        {/* APP CONFIG */}
-        <section style={styles.section}>
-          <h2 style={styles.sectionTitle}>⚙ App Preferences</h2>
-          <div style={styles.card}>
-            <p>Notifications: Enabled</p>
-            <p>Auto AI Detection: Enabled</p>
-          </div>
-        </section>
+      {/* Preferences */}
+      <section style={styles.section}>
+        <h3 style={styles.sectionHeading}>Preferences</h3>
 
-        {/* LOGOUT BUTTON */}
-        <section style={styles.section}>
-          <button style={styles.logoutBtn} onClick={handleLogout}>
-            Logout
-          </button>
-        </section>
+        <div style={styles.prefRow}>
+          <span>Notifications</span>
+          <input
+            type="checkbox"
+            checked={notifications}
+            onChange={() => setNotifications(!notifications)}
+          />
+        </div>
 
-      </main>
+        <div style={styles.prefRow}>
+          <span>Language</span>
+          <select value={language} onChange={(e) => setLanguage(e.target.value)} style={styles.select}>
+            <option value="en">English</option>
+            <option value="hi">Hindi</option>
+            <option value="es">Spanish</option>
+          </select>
+        </div>
+
+        <div style={styles.prefRow}>
+          <span>Theme</span>
+          <select value={theme} onChange={(e) => setTheme(e.target.value)} style={styles.select}>
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </div>
+      </section>
+
+      {/* Logout */}
+      <section style={styles.section}>
+        <button style={styles.logoutButton} onClick={() => router.push("/login")}>
+          Logout
+        </button>
+      </section>
+
+      {message && <p style={{ ...styles.message, color: message.includes("successfully") ? "green" : "red" }}>{message}</p>}
     </div>
   );
 }
 
+// -------------------------
+// STYLES
+// -------------------------
 const styles = {
   wrapper: {
-    display: "flex",
-    height: "100vh",
-    backgroundColor: "#f4fff8",
-    fontFamily: "Inter, Noto Sans, Poppins, sans-serif",
-  },
-
-  sidebar: {
-    width: "250px",
-    backgroundColor: "#0f5132",
-    color: "white",
-    padding: "30px 20px",
-    borderRight: "4px solid #0a3f25",
-  },
-
-  nav: {
+    maxWidth: "600px",
+    margin: "0 auto",
+    background: "#fff",
+    padding: "30px",
+    borderRadius: "12px",
+    boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
     display: "flex",
     flexDirection: "column",
-    gap: "15px",
+    gap: "25px",
   },
-
-  navItem: {
-    color: "white",
-    fontSize: "18px",
-    textDecoration: "none",
-    padding: "8px 0",
-    transition: "0.2s",
+  heading: {
+    fontSize: "26px",
+    fontWeight: "700",
+    color: "#276938",
   },
-
-  main: {
-    flexGrow: 1,
-    padding: "40px 50px",
-    overflowY: "auto",
-  },
-
-  pageTitle: {
-    fontSize: "32px",
-    fontWeight: 700,
-    marginBottom: "30px",
-  },
-
   section: {
-    marginBottom: "40px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
   },
-
-  sectionTitle: {
-    fontSize: "22px",
-    fontWeight: 600,
-    marginBottom: "10px",
+  sectionHeading: {
+    fontSize: "18px",
+    fontWeight: "600",
+    color: "#276938",
   },
-
-  card: {
-    backgroundColor: "white",
-    padding: "20px",
-    borderRadius: "12px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  sectionText: {
+    fontSize: "14px",
+    color: "#555",
   },
-
-  selectBox: {
-    width: "200px",
-    padding: "10px",
+  form: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+  },
+  input: {
+    padding: "12px",
     borderRadius: "8px",
     border: "1px solid #ccc",
+    fontSize: "15px",
+    outline: "none",
+    width: "100%",
   },
-
-  logoutBtn: {
-    padding: "15px 30px",
-    backgroundColor: "#cc0000",
-    color: "white",
-    fontSize: "18px",
-    border: "none",
-    borderRadius: "10px",
+  passwordWrapper: {
+    position: "relative",
+    width: "100%",
+  },
+  togglePassword: {
+    position: "absolute",
+    right: "12px",
+    top: "50%",
+    transform: "translateY(-50%)",
     cursor: "pointer",
-    transition: "0.2s",
+    color: "#276938",
+    fontWeight: "600",
+  },
+  button: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#276938",
+    color: "#fff",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+  prefRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  select: {
+    padding: "8px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+  },
+  logoutButton: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "none",
+    backgroundColor: "#e74c3c",
+    color: "#fff",
+    fontWeight: "600",
+    cursor: "pointer",
+  },
+  message: {
+    textAlign: "center",
+    fontWeight: "500",
+    marginTop: "10px",
   },
 };

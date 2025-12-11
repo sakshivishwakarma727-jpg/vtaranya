@@ -7,67 +7,84 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const redirectTo = searchParams.get("redirect");
+  const redirect = searchParams.get("redirect");
 
+  // -------------------------------
+  // STATES
+  // -------------------------------
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState("");
 
+  // -------------------------------
+  // VALIDATION
+  // -------------------------------
+  const validateInputs = () => {
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      return "Enter a valid email address.";
+    }
+    if (password.length < 6) {
+      return "Password must be at least 6 characters.";
+    }
+    return null;
+  };
+
+  // -------------------------------
+  // HANDLE LOGIN
+  // -------------------------------
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
 
+    const error = validateInputs();
+    if (error) {
+      setMessage(error);
+      return;
+    }
+
     const res = await fetch("/api/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      credentials: "include", // REQUIRED FOR COOKIES
+      credentials: "include",
       body: JSON.stringify({ email, password }),
     });
 
     const data = await res.json();
     if (!res.ok) return setMessage(data.error || "Login failed");
 
-    setMessage("Login successful..");
+    setMessage("Login successful...");
 
-    const searchParams = new URLSearchParams(window.location.search);
-    const redirect = searchParams.get("redirect");
+    if (redirect === "homeThenReport") {
+      router.push("/home");
+      setTimeout(() => router.push("/report"), 900);
+      return;
+    }
 
-// 1️⃣ Coming from landing page:
-if (redirect === "homeThenReport") {
-  router.push("/home");
+    if (redirect === "report") {
+      router.push("/report");
+      return;
+    }
 
-  setTimeout(() => {
-    router.push("/report");
-  }, 1000);
-
-  return;
-}
-
-// 2️⃣ Normal protected redirect
-if (redirect === "report") {
-  router.push("/report");
-  return;
-}
-
-// 3️⃣ Default login redirect
-router.push("/home");
-
-
-  }; // ✅ FIXED — THIS WAS MISSING
+    router.push("/home");
+  };
 
   return (
     <div style={styles.wrapper}>
+      {/* -------- LOGO + TITLE -------- */}
       <div style={styles.titleSection}>
         <img src="/logo.png" alt="Logo" style={styles.logoImg} />
         <h1 style={styles.title}>VTARANYA</h1>
       </div>
 
       <p style={styles.description}>
-        Report environmental issues efficiently. Our system ensures your reports
-        reach the right authority while keeping your data secure.
+        Report environmental issues efficiently. Your reports reach the right
+        authority while keeping your data secure.
       </p>
 
+      {/* -------- LOGIN FORM -------- */}
       <form style={styles.form} onSubmit={handleSubmit}>
+        {/* EMAIL */}
         <input
           type="email"
           placeholder="Email"
@@ -77,28 +94,45 @@ router.push("/home");
           required
         />
 
-        <input
-          type="password"
-          placeholder="Password"
-          style={styles.input}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        />
+        {/* PASSWORD WITH SHOW/HIDE */}
+        <div style={styles.passwordWrapper}>
+          <input
+            type={showPassword ? "text" : "password"}
+            placeholder="Password"
+            style={styles.input}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            
+            required
+          />
 
-        <button style={styles.button}>Login</button>
-
-        <div style={styles.links}>
-          <a href="/forgot-password" style={styles.link}>
-            Forgot Password?
-          </a>
-          <span style={{ color: "#999" }}> | </span>
-          <a href="/register" style={styles.link}>
-            Sign Up
-          </a>
+          <span
+            style={styles.togglePassword}
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </span>
         </div>
 
-        {message && <p style={styles.message}>{message}</p>}
+        {/* LOGIN BUTTON */}
+        <button type="submit" style={styles.button}>Login</button>
+
+        {/* LINKS */}
+        <div style={styles.links}>
+          <a href="/forgot-password" style={styles.link}>Forgot Password?</a>
+          <span style={{ color: "#999" }}> | </span>
+          <a href="/register" style={styles.link}>Sign Up</a>
+        </div>
+
+        {/* VALIDATION / SUCCESS MESSAGE */}
+        {message && (
+          <p style={{
+            ...styles.message,
+            color: message.includes("successful") ? "green" : "red"
+          }}>
+            {message}
+          </p>
+        )}
       </form>
 
       <footer style={styles.footer}>
@@ -106,8 +140,11 @@ router.push("/home");
       </footer>
     </div>
   );
-} // ✅ FIXED — THIS WAS MISSING
+}
 
+/* --------------------------------------
+   VTARANYA STYLES (INLINE, SAME FORMAT)
+-----------------------------------------*/
 
 const styles = {
   wrapper: {
@@ -177,6 +214,24 @@ const styles = {
     outline: "none",
   },
 
+  passwordWrapper: {
+  position: "relative",
+  width: "100%",
+  marginBottom: "15px",
+},
+
+togglePassword: {
+  position: "absolute",
+  right: "12px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  cursor: "pointer",
+  color: "#276938",
+  fontWeight: "600",
+  userSelect: "none",
+},
+
+
   button: {
     width: "100%",
     padding: "12px",
@@ -207,7 +262,6 @@ const styles = {
   message: {
     marginTop: "15px",
     textAlign: "center",
-    color: "red",
     fontWeight: "500",
   },
 
