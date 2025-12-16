@@ -66,7 +66,7 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/home");
+    router.replace("/home");
   };
 
   return (

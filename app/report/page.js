@@ -6,32 +6,6 @@ import { useState, useEffect } from "react";
 export default function UserReportPage() {
   const router = useRouter();
 
-  // ---------------- CHECK LOGIN FIRST ----------------
-useEffect(() => {
-  async function checkAuth() {
-    const res = await fetch("/api/auth/check", { credentials: "include" });
-    const data = await res.json();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const fromLanding = urlParams.get("fromLanding");
-
-    // 1️⃣ User clicked from landing page → ALWAYS show login
-    if (fromLanding === "true") {
-      router.push("/login?redirect=homeThenReport");
-      return;
-    }
-
-    // 2️⃣ User accessing from home or direct URL
-    if (!data.loggedIn) {
-      router.push("/login?redirect=report");
-    }
-  }
-
-  checkAuth();
-}, []);
-
-
-
 
   // ---------------- FORM STATES ----------------
   const [form, setForm] = useState({

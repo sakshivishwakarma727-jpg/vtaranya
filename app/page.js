@@ -9,19 +9,6 @@ export default function LandingPage() {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Check login using backend (reads httpOnly cookie)
-  useEffect(() => {
-    async function checkLogin() {
-      try {
-        const res = await fetch("/api/auth/check");
-        const data = await res.json();
-        setIsLoggedIn(data.loggedIn);
-      } catch (err) {
-        console.error("Login check failed", err);
-      }
-    }
-    checkLogin();
-  }, []);
 
   // REPORT CLICK HANDLER - ALWAYS FORCES LOGIN FIRST
   const handleReportClick = (e) => {
@@ -54,6 +41,7 @@ export default function LandingPage() {
   }, []);
 
   return (
+    
     <div style={styles.wrapper}>
 
       {/* HEADER */}
@@ -62,6 +50,7 @@ export default function LandingPage() {
           <img src="/logo.png" alt="Logo" style={styles.logoImg} />
           <h2 style={styles.logo}>VTARANYA</h2>
         </div>
+        
 
         <div style={styles.btnBox}>
           {/* NORMAL LOGIN BUTTON – DOES NOT AFFECT REPORT FLOW */}

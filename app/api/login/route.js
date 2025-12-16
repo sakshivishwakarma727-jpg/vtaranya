@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcryptjs";
-import User from "@/models/User";
+import jwt from "jsonwebtoken";
 import { connectDB } from "@/lib/mongodb";
+import User from "@/models/User";
 
 export async function POST(req) {
   try {
@@ -10,9 +10,6 @@ export async function POST(req) {
 
     const { email, password } = await req.json();
 
-    // -----------------------------
-    // BACKEND VALIDATION
-    //------------------------------
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required" },
@@ -20,78 +17,38 @@ export async function POST(req) {
       );
     }
 
-    // validate email format
-    const emailRegex = /^\S+@\S+\.\S+$/;
-    if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "Invalid email format" },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: "Password must be at least 6 characters" },
-        { status: 400 }
-      );
-    }
-
-    // -----------------------------
-    // CHECK USER
-    // -----------------------------
     const user = await User.findOne({ email });
-
     if (!user) {
       return NextResponse.json(
-        { error: "No user found with this email" },
-        { status: 404 }
-      );
-    }
-
-    // If future: email verification or blocked user
-    if (user.status === "blocked") {
-      return NextResponse.json(
-        { error: "Your account is blocked" },
-        { status: 403 }
-      );
-    }
-
-    // -----------------------------
-    // PASSWORD MATCH
-    // -----------------------------
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
-      return NextResponse.json(
-        { error: "Incorrect password" },
+        { error: "Invalid credentials" },
         { status: 401 }
       );
     }
 
-    // -----------------------------
-    // CREATE JWT TOKEN
-    // -----------------------------
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return NextResponse.json(
+        { error: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
+
+    // ✅ TOKEN PAYLOAD MATCHES user/me
     const token = jwt.sign(
-      { userId: user._id, email: user.email },
+      { userId: user._id.toString() },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
 
-    // -----------------------------
-    // SEND COOKIE BACK
-    // -----------------------------
-    const res = NextResponse.json({
-      message: "Login successful",
-      user: {
-        name: user.name,
-        email: user.email,
-        id: user._id,
-      },
-    });
+    const res = NextResponse.json(
+      { message: "Login successful" },
+      { status: 200 }
+    );
 
+    // ✅ COOKIE SETTINGS (STABLE)
     res.cookies.set("token", token, {
-      httpOnly: true, // protect from JS access
-      secure: process.env.NODE_ENV === "production", 
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
@@ -99,10 +56,10 @@ export async function POST(req) {
 
     return res;
 
-  } catch (error) {
-    console.error("LOGIN ERROR:", error);
+  } catch (err) {
+    console.error("LOGIN ERROR:", err);
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Server error" },
       { status: 500 }
     );
   }

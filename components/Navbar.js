@@ -26,7 +26,7 @@ export default function Navbar({ activeSection, scrollTo }) {
             </span>
           </li>
 
-          {/* DROPDOWN */}
+          {/* DROPDOWN
           <li className="dropdown">
             <span
               onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -40,7 +40,7 @@ export default function Navbar({ activeSection, scrollTo }) {
                 <Link href="/report">Report Issue</Link>
               </li>
             </ul>
-          </li>
+            // </li> */}
 
           <li>
             <span onClick={() => scrollTo("about")}>About</span>

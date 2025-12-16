@@ -2,258 +2,272 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import SettingsSidebar from "@/components/settingdropdrown";
 
-export default function SettingsPage({ user }) {
+export default function SettingsPage() {
   const router = useRouter();
+  const [active, setActive] = useState("profile");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [showPassword, setShowPassword] = useState(false);
-  const [notifications, setNotifications] = useState(true);
-  const [language, setLanguage] = useState("en");
-  const [theme, setTheme] = useState("light");
-  const [message, setMessage] = useState("");
-
-  // -------------------------------
-  // Form Validation
-  // -------------------------------
-  const validateForm = () => {
-    const { name, email, password, confirmPassword } = form;
-    if (!name || name.trim().length < 3) return "Name must be at least 3 characters.";
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) return "Enter a valid email.";
-
-    if (password) {
-      if (password.length < 6) return "Password must be at least 6 characters.";
-      if (password !== confirmPassword) return "Passwords do not match.";
-    }
-
-    return null;
-  };
-
-  // -------------------------------
-  // Handle Save Changes
-  // -------------------------------
-  const handleSave = async (e) => {
-    e.preventDefault();
-    setMessage("");
-
-    const error = validateForm();
-    if (error) return setMessage(error);
-
+  async function handleDeleteAccount() {
     try {
-      const res = await fetch("/api/settings", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, notifications, language, theme }),
+      setLoading(true);
+      const res = await fetch("/api/account/delete", {
+        method: "DELETE",
+        credentials: "include",
       });
-      const data = await res.json();
-      if (!res.ok) return setMessage(data.error || "Update failed");
 
-      setMessage("Settings updated successfully!");
+      if (res.ok) {
+        router.replace("/");
+      } else {
+        alert("Failed to delete account");
+      }
     } catch (err) {
       console.error(err);
-      setMessage("Server error. Try again.");
+      alert("Something went wrong");
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
-    <div style={styles.wrapper}>
-      <h2 style={styles.heading}>Settings</h2>
-
-      {/* About Us */}
-      <section style={styles.section}>
-        <h3 style={styles.sectionHeading}>About Us</h3>
-        <p style={styles.sectionText}>
-          VTARANYA is dedicated to protecting the environment by allowing users to report environmental issues efficiently and securely.
-        </p>
-      </section>
-
-      {/* Profile Settings */}
-      <section style={styles.section}>
-        <h3 style={styles.sectionHeading}>Profile Settings</h3>
-        <form style={styles.form} onSubmit={handleSave}>
-          <input
-            type="text"
-            placeholder="Full Name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            style={styles.input}
-            required
-          />
-          <input
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            style={styles.input}
-            required
-          />
-          <div style={styles.passwordWrapper}>
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="New Password"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              style={styles.input}
-            />
-            <span style={styles.togglePassword} onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? "Hide" : "Show"}
-            </span>
+    <div className="settings-page">
+      {/* HEADER */}
+      <header className="settings-header">
+        <div className="brand">
+          <img src="/logo.png" alt="VTARANYA" />
+          <div>
+            <h1>VTARANYA</h1>
+            <span>Account Settings</span>
           </div>
-          <input
-            type="password"
-            placeholder="Confirm Password"
-            value={form.confirmPassword}
-            onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
-            style={styles.input}
-          />
-
-          <button type="submit" style={styles.button}>Save Changes</button>
-        </form>
-      </section>
-
-      {/* Preferences */}
-      <section style={styles.section}>
-        <h3 style={styles.sectionHeading}>Preferences</h3>
-
-        <div style={styles.prefRow}>
-          <span>Notifications</span>
-          <input
-            type="checkbox"
-            checked={notifications}
-            onChange={() => setNotifications(!notifications)}
-          />
         </div>
+      </header>
 
-        <div style={styles.prefRow}>
-          <span>Language</span>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} style={styles.select}>
-            <option value="en">English</option>
-            <option value="hi">Hindi</option>
-            <option value="es">Spanish</option>
-          </select>
+      {/* BODY */}
+      <div className="settings-body">
+        <SettingsSidebar active={active} setActive={setActive} />
+
+        <main className="settings-content">
+          {/* PROFILE */}
+          {active === "profile" && (
+            <section>
+              <h2>Profile</h2>
+              <p>View and manage your personal account information.</p>
+
+              <div className="card">
+                <label>Name</label>
+                <input disabled placeholder="Fetched from database" />
+
+                <label>Email</label>
+                <input disabled placeholder="Fetched from database" />
+              </div>
+            </section>
+          )}
+
+          {/* NOTIFICATIONS */}
+          {active === "notifications" && (
+            <section>
+              <h2>Notifications</h2>
+              <p>Control system alerts and report updates.</p>
+
+              <div className="card">
+                <label>
+                  <input type="checkbox" defaultChecked /> Email updates
+                </label>
+                <label>
+                  <input type="checkbox" defaultChecked /> Report status alerts
+                </label>
+              </div>
+            </section>
+          )}
+
+          {/* LANGUAGE */}
+          {active === "language" && (
+            <section>
+              <h2>Language Preferences</h2>
+              <p>Select your preferred language.</p>
+
+              <div className="card">
+                <select>
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
+                  <option value="mr">Marathi</option>
+                </select>
+              </div>
+            </section>
+          )}
+
+          {/* ABOUT */}
+          {active === "about" && (
+            <section>
+              <h2>About VTARANYA</h2>
+              <p>
+                VTARANYA is a verified environmental grievance reporting platform
+                designed to securely connect citizens and authorities using AI,
+                structured reporting, and accountability.
+              </p>
+            </section>
+          )}
+
+          {/* LOGOUT */}
+          {active === "logout" && (
+            <section>
+              <h2>Delete Account</h2>
+              <p className="danger-text">
+                Deleting your account will permanently remove your public data.
+                
+              </p>
+
+              <button
+                className="danger-btn"
+                onClick={() => setShowConfirm(true)}
+              >
+                Delete My Account
+              </button>
+            </section>
+          )}
+        </main>
+      </div>
+
+      {/* CONFIRM MODAL */}
+      {showConfirm && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>Confirm Account Deletion</h3>
+            <p>
+              This action is irreversible. Your reports will be removed from the
+              public system. Internal records may be retained for compliance.
+            </p>
+
+            <div className="modal-actions">
+              <button onClick={() => setShowConfirm(false)}>Cancel</button>
+              <button
+                className="danger-btn"
+                onClick={handleDeleteAccount}
+                disabled={loading}
+              >
+                {loading ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
         </div>
+      )}
 
-        <div style={styles.prefRow}>
-          <span>Theme</span>
-          <select value={theme} onChange={(e) => setTheme(e.target.value)} style={styles.select}>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </div>
-      </section>
+      {/* STYLES */}
+      <style jsx>{`
+        .settings-page {
+          min-height: 100vh;
+          background: #f4f7f5;
+          color: #102d23;
+          font-family: Inter, sans-serif;
+        }
 
-      {/* Logout */}
-      <section style={styles.section}>
-        <button style={styles.logoutButton} onClick={() => router.push("/login")}>
-          Logout
-        </button>
-      </section>
+        .settings-header {
+          padding: 20px 40px;
+          border-bottom: 1px solid #dfe6e3;
+          background: white;
+        }
 
-      {message && <p style={{ ...styles.message, color: message.includes("successfully") ? "green" : "red" }}>{message}</p>}
+        .brand {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+
+        .brand img {
+          width: 42px;
+        }
+
+        .brand h1 {
+          margin: 0;
+          font-size: 20px;
+        }
+
+        .brand span {
+          font-size: 13px;
+          color: #4f6f63;
+        }
+
+        .settings-body {
+          display: flex;
+          min-height: calc(100vh - 80px);
+        }
+
+        .settings-content {
+          flex: 1;
+          padding: 40px;
+        }
+
+        h2 {
+          margin-bottom: 10px;
+        }
+
+        .card {
+          background: white;
+          padding: 25px;
+          border-radius: 12px;
+          max-width: 500px;
+        }
+
+        label {
+          display: block;
+          margin-bottom: 15px;
+        }
+
+        input,
+        select {
+          width: 100%;
+          padding: 10px;
+          border-radius: 8px;
+          border: 1px solid #cfdad5;
+        }
+
+        .danger-btn {
+          background: #c0392b;
+          color: white;
+          padding: 12px 22px;
+          border: none;
+          border-radius: 8px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .danger-text {
+          color: #b3392f;
+          max-width: 500px;
+        }
+
+        /* MODAL */
+        .modal-backdrop {
+          position: fixed;
+          inset: 0;
+          background: rgba(0, 0, 0, 0.45);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal {
+          background: white;
+          padding: 30px;
+          border-radius: 14px;
+          max-width: 420px;
+        }
+
+        .modal-actions {
+          display: flex;
+          justify-content: flex-end;
+          gap: 12px;
+          margin-top: 20px;
+        }
+
+        @media (max-width: 900px) {
+          .settings-body {
+            flex-direction: column;
+          }
+        }
+      `}</style>
     </div>
   );
 }
-
-// -------------------------
-// STYLES
-// -------------------------
-const styles = {
-  wrapper: {
-    maxWidth: "600px",
-    margin: "0 auto",
-    background: "#fff",
-    padding: "30px",
-    borderRadius: "12px",
-    boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
-    display: "flex",
-    flexDirection: "column",
-    gap: "25px",
-  },
-  heading: {
-    fontSize: "26px",
-    fontWeight: "700",
-    color: "#276938",
-  },
-  section: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  sectionHeading: {
-    fontSize: "18px",
-    fontWeight: "600",
-    color: "#276938",
-  },
-  sectionText: {
-    fontSize: "14px",
-    color: "#555",
-  },
-  form: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "12px",
-  },
-  input: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    fontSize: "15px",
-    outline: "none",
-    width: "100%",
-  },
-  passwordWrapper: {
-    position: "relative",
-    width: "100%",
-  },
-  togglePassword: {
-    position: "absolute",
-    right: "12px",
-    top: "50%",
-    transform: "translateY(-50%)",
-    cursor: "pointer",
-    color: "#276938",
-    fontWeight: "600",
-  },
-  button: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "none",
-    backgroundColor: "#276938",
-    color: "#fff",
-    fontSize: "16px",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  prefRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  select: {
-    padding: "8px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-  },
-  logoutButton: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "none",
-    backgroundColor: "#e74c3c",
-    color: "#fff",
-    fontWeight: "600",
-    cursor: "pointer",
-  },
-  message: {
-    textAlign: "center",
-    fontWeight: "500",
-    marginTop: "10px",
-  },
-};
