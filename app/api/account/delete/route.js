@@ -47,7 +47,7 @@ export async function DELETE() {
         { status: 500 }
       );
     }
-
+    
     // 🍪 CLEAR COOKIE
     const res = NextResponse.json(
       { message: "Account deleted successfully" },

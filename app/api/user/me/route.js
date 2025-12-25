@@ -8,6 +8,7 @@ export async function GET() {
   try {
     await connectDB();
 
+    // ✅ cookies() is SYNC in route handlers (no await needed)
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value;
 
@@ -18,18 +19,31 @@ export async function GET() {
       );
     }
 
+    // ✅ SAFELY VERIFY TOKEN
     let decoded;
     try {
       decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
+    } catch (err) {
       return NextResponse.json(
         { error: "Invalid or expired token" },
         { status: 401 }
       );
     }
 
-    // ✅ FIXED HERE
-    const user = await User.findById(decoded.userId).select("-password");
+    // ✅ MUST MATCH LOGIN TOKEN PAYLOAD
+    // login uses: { userId: user._id }
+    if (!decoded.userId) {
+      return NextResponse.json(
+        { error: "Invalid token payload" },
+        { status: 401 }
+      );
+    }
+
+    // ✅ FIND USER (exclude password + deleted users)
+    const user = await User.findOne({
+      _id: decoded.userId,
+      isDeleted: { $ne: true },
+    }).select("-password");
 
     if (!user) {
       return NextResponse.json(
@@ -38,7 +52,7 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json(user);
+    return NextResponse.json(user, { status: 200 });
 
   } catch (err) {
     console.error("USER ME ERROR:", err);
